@@ -10,7 +10,8 @@
             right
           </div>         
         </div>
-        <div class="list__content_cards"> 
+        <div  v-if="albums.length > 0"
+              class="list__content_cards"> 
           <div 
             class="list__content_cards--detail_card"
             v-for="(album,index) in albums" :key="index">
@@ -24,10 +25,21 @@
           </div>
         </div>
 
-       <!--  <div>
+        <div>
+          <h1>Autentificar</h1>
+          <button @click="pushClick()">
+            Click
+          </button>
+           <button @click="postToken()">
+            Post Token
+          </button>
+        </div>
+        <div>
           <h1>Parametros</h1>
+          <p>{{ firstToken }}</p>
           <p>{{ albums }}</p>
-        </div> -->
+          <p>{{ display }}</p>
+        </div>
     </div>
 </template>
 <script>
@@ -38,16 +50,19 @@ export default {
   components: {
     appNavbar: Navbar
   },
+  props: ['hash'], 
   data () {
     return {
       playlist: [],
       albums: [],
+      token: '',
+      display: false,
       token: ''
     }
   },
   methods: {
-    getPlayList(){
-      /* let user_id = "javierking1993" */
+   /*  getPlayList(){
+      //let user_id = "javierking1993" 
       let user_id = "nicolasosorioarias"
       let limit = 20
       let offset = 1
@@ -67,13 +82,13 @@ export default {
       } catch (e) {
         alert(e.message)
       }
-    }, 
+    },  */
     getNewReleases(){
       /* let user_id = "javierking1993" */
-      let user_id = "nicolasosorioarias"
+      let user_id = "javierking1993"
       let limit = 10
       let offset = 0
-      let token = 'BQDEcm43Ywcc3scxn78sCTh3B9nSrNHCnq7kUb1qCshO3esQHq50ChS9OipOYdca83vRgwc1xlJCVVpDpJra3YtN859tIs2rhN_PpZC-Hj3TYfMHQfCE8nyiR0fpgF7BLkNGrDh_yPaUCVv2pBOTI6xtdVH9ro__JSNi7nIDhAwdHcc'
+      let token = 'BQC7bY30bS6aJ3LShJ1Ed4lTY-H8CDFNqdlr_KZXVE7tScjhaF4ojagIRpID1--h9Xuq1XDQCvzpO2CA_5WpZ211c4Q8xipMtwdAT_vfzGHI5vW6tGFZJOwgMi4cfRpLRX95piGZBHpqeJx0ACZeHA'
       let userAccessToken = 'Bearer '+ token 
       try { 
         this.$http.get('https://api.spotify.com/v1/browse/new-releases?country=SE&offset='+offset+'&limit='+limit,{
@@ -91,39 +106,114 @@ export default {
         alert(e.message)
       }
     },
-    getToken(){
-      console.log('getToken()');
-      /* let user_id = "javierking1993" */
-      let my_client_id = '6af9833eeca84ef7a07b4295ba0c2d54';
-      let my_client_secret = '3277d7728e1c413a9ae3e13824dce69e';
-      let redirect_uri = 'http://localhost:8080/'
-      let state = 'abc123'
-      let scope = 'playlist-read-collaborative playlist-read-private'
+    login(callback) {
+      console.log('login()')
+      var CLIENT_ID = '6af9833eeca84ef7a07b4295ba0c2d54';
+      var REDIRECT_URI = 'http://localhost:8080/callback/';
+      function getLoginURL(scopes) {
+          return 'https://accounts.spotify.com/authorize?client_id=' + CLIENT_ID +
+            '&redirect_uri=' + encodeURIComponent(REDIRECT_URI) +
+            '&scope=' + encodeURIComponent(scopes.join(' ')) +
+            '&response_type=code';
+      }
+      var url = getLoginURL([
+          'user-read-email'
+      ]);
+      /* console.log('URL ',url) */
+      var width = 450,
+          height = 730,
+          left = (screen.width / 2) - (width / 2),
+          top = (screen.height / 2) - (height / 2);
+     
+      var w = window.open(url, '_self', 'menubar=no,location=no,resizable=no,scrollbars=no,status=no, width=' + width + ', height=' + height + ', top=' + top + ', left=' + left);
+      
+    },
+    getUserData(accessToken) {
+      console.log('getUserData(accessToken)')
       try { 
-        this.$http.get('https://accounts.spotify.com/authorize?response_type=code&client_id=' + my_client_id + 
-        '&redirect_uri='+ redirect_uri  +'&scope='+scope + '&state='+ state 
-        ,{
-          headers:{
-            "Authorization": 'Basic ' + (my_client_id + ':' + my_client_secret).toString('base64')
-          } 
+        this.$http.get('https://api.spotify.com/v1/me',{
+            headers:{
+            "Authorization": 'Bearer' + accessToken
+          }
         })
         .then(function(response){
-          console.log('response token' ,response)
-          this.token = response
-          console.log(response)
+          console.log('accessToken'. response)
         }, function(response){
-          
+          //error
         })
       } catch (e) {
         alert(e.message)
       }
-    } 
+    },
+    getAuth() {
+      this.login(function(accessToken) {
+      this.getUserData(accessToken)
+          .then(function(response) {
+              console.log(response);
+          });
+      });
+     
+    },
+    pushClick() {
+      this.getAuth()
+    },
+    postToken() {
+      console.log('postToken()')
+      let client_id = '6af9833eeca84ef7a07b4295ba0c2d54'
+      let client_secret = '3277d7728e1c413a9ae3e13824dce69e'
+      var REDIRECT_URI = 'http://localhost:8080/callback/';
+      var encodedData = window.btoa(client_id + ':' + client_secret);
+      console.log('encodedData', encodedData )
+     console.log('post token ', this.token);
+      try { 
+        this.$http.post('https://accounts.spotify.com/api/token',
+            /*  +'grant_type=application/x-www-form-urlencoded'
+             +'&refresh_token='
+        ,    */
+            {
+              "grant_type":    "authorization_code",
+              "code": this.token,
+              "redirect_uri": REDIRECT_URI,
+            } 
+            ,{
+            headers:{
+            "Authorization": 'Basic ' + encodedData, 
+            "Access-Control-Allow-Origin": "http://localhost:8080",
+            "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Origin, Content-Type, X-Auth-Token"
+          }
+        })
+        .then(function(response){
+          console.log('POST  ', response)
+        }, function(response){
+          //error
+        })
+      } catch (e) {
+        alert(e.message)
+      }
+    },
   }, /* close methods */
-  mounted(){
-    /* this.getPlayList() */
-    this.getToken();
-    this.getNewReleases();
+  computed: {
+    firstToken(){
+      let token = 'none'
+      this.token = 'none'
+      try {
+        let url = location.href
+        token = url.replace(/[http://localhost:8080/callback/?code=]/g,'')
+        /* url.substring(url.indexOf('access_token=') + 13,url.indexOf('&token_type=') ) */
+        this.token = token
+      } catch (error) {
+        
+      }
+      return token 
+    }
     
+  },
+  mounted(){
+  /*     if (this.token !== 'none'){
+        this.getNewReleases()
+        this.display = true;
+      }    */ 
   }
 }
 </script>

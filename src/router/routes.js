@@ -8,5 +8,6 @@ export default [
   { path: '/', component: Index,  name: 'index'  },
   { path: '/artists', component: Artists,  name: 'artists'  },
   { path: '/search_song', component: SearchSong,  name: 'search_song'  },
-  { path: '/artist_detail', component: ArtistDetail,  name: 'artist_detail'  }
+  { path: '/artist_detail', component: ArtistDetail,  name: 'artist_detail'  },
+  { path: '/callback', component: Index,  name: 'callback'  }
 ]
